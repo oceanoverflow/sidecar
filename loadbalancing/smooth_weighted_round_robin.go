@@ -49,22 +49,37 @@ func nextWeighted(servers []*weighted) (best *weighted) {
 
 // WeightedServers is a collection of weighted server
 type WeightedServers struct {
-	sync.Mutex
-	servers []*weighted
-	n       int
+	sync.RWMutex
+	servers    []*weighted
+	serversMap map[string]bool
+	n          int
+}
+
+func New() *WeightedServers {
+	return &WeightedServers{
+		serversMap: make(map[string]bool),
+		n:          0,
+	}
 }
 
 // Add add one server to the collection
 func (ws *WeightedServers) Add(server string, weight int) {
 	ws.Lock()
 	defer ws.Unlock()
-	w := &weighted{
-		Server:          server,
-		Weight:          weight,
-		EffectiveWeight: weight,
+	if _, ok := ws.serversMap[server]; !ok {
+		w := &weighted{
+			Server:          server,
+			Weight:          weight,
+			EffectiveWeight: weight,
+		}
+		if ws.n >= len(ws.servers) {
+			ws.servers = append(ws.servers, w)
+		} else {
+			ws.servers[ws.n] = w
+		}
+		ws.serversMap[server] = true
+		ws.n++
 	}
-	ws.n++
-	ws.servers = append(ws.servers, w)
 }
 
 // Next get the next server for load balancing
@@ -74,6 +89,12 @@ func (ws *WeightedServers) Next() string {
 		return ""
 	}
 	return i.Server
+}
+
+func (ws *WeightedServers) Len() int {
+	ws.RLock()
+	defer ws.RUnlock()
+	return ws.n
 }
 
 func (ws *WeightedServers) nextWeighted() *weighted {

@@ -1,0 +1,27 @@
+[leakybuffer]
+    n = 100000
+    bufSize = 1024
+
+[connpool]
+    initial = 50
+    max = 5000
+
+# the http port that consumer agent listens on
+[consumer]
+    port  = ":20000"
+
+# the tcp port that opened by each provider
+# small, medium and large respectively
+# dubbo represents the port of dubbo rpc
+[provider]
+    [provider.small]
+    port  = ":30000"
+    dubbo = ":20889"
+
+    [provider.medium]
+    port  = ":30001"
+    dubbo = ":20890"
+
+    [provider.large]
+    port  = ":30002"
+    dubbo = ":20891"
