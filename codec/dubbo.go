@@ -37,6 +37,14 @@ const (
 	SERVER_THREADPOOL_EXHAUSTED_ERROR            = 100
 )
 
+type ReturnValueType int
+
+const (
+	RESPONSE_WITH_EXCEPTION ReturnValueType = iota
+	RESPONSE_VALUE
+	RESPONSE_NULL_VALUE
+)
+
 // MagicHigh byte
 // MagicLow  byte
 // Misc      byte
