@@ -8,16 +8,16 @@ echo ETCD_URL = $ETCD_URL
 
 if [[ "$1" == "consumer" ]]; then
   echo "Starting consumer agent..."
-  /app/sidecar consumer --etcd=$ETCD_URL 
+  sidecar consumer --etcd=$ETCD_URL 
 elif [[ "$1" == "provider-small" ]]; then
   echo "Starting small provider agent..."
-  /app/sidecar provider small --etcd=$ETCD_URL 
+  sidecar provider small --etcd=$ETCD_URL 
 elif [[ "$1" == "provider-medium" ]]; then
   echo "Starting medium provider agent..."
-  /app/sidecar provider medium --etcd=$ETCD_URL  
+  sidecar provider medium --etcd=$ETCD_URL  
 elif [[ "$1" == "provider-large" ]]; then
   echo "Starting large provider agent..."
-  /app/sidecar provider large --etcd=$ETCD_URL  
+  sidecar provider large --etcd=$ETCD_URL  
 else
   echo "Unrecognized arguments, exit."
   exit 1
