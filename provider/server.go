@@ -64,23 +64,25 @@ func ServeCommunicate(host, port, dubbo string) {
 }
 
 func handleConnection(conn net.Conn, dubbo string, connPool pool.Pool) {
-	info, err := bufio.NewReader(conn).ReadString('\n')
-	if err != nil {
-		log.Println("error reading from the net.Conn")
-		return
+	for {
+		info, err := bufio.NewReader(conn).ReadString('\n')
+		if err != nil {
+			log.Println("error reading from the net.Conn")
+			return
+		}
+		info = info[:len(info)-1]
+		slices := strings.Split(info, "-")
+		r := codec.NewRequest()
+		r.Arguments = []byte(slices[3])
+		payload := r.Encode()
+		result := call(dubbo, payload, connPool)
+		dubboResponse, err := codec.Read(bytes.NewReader(result))
+		if err != nil {
+			log.Println("error decoding result, can not parse")
+			return
+		}
+		conn.Write(dubboResponse.Value)
 	}
-	info = info[:len(info)-1]
-	slices := strings.Split(info, "-")
-	r := codec.NewRequest()
-	r.Arguments = []byte(slices[3])
-	payload := r.Encode()
-	result := call(dubbo, payload, connPool)
-	dubboResponse, err := codec.Read(bytes.NewReader(result))
-	if err != nil {
-		log.Println("error decoding result, can not parse")
-		return
-	}
-	conn.Write(dubboResponse.Value)
 }
 
 func call(dubbo string, payload []byte, connPool pool.Pool) (result []byte) {
