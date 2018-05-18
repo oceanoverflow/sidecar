@@ -57,11 +57,11 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	param := r.Form.Get("parameter")
 
 	result := h.communicate(itfc, method, paramTypes, param)
-	w.Write([]byte(result))
+	w.Write(result)
 	return
 }
 
-func (h *handler) communicate(interfaceName, method, parameterTypesString, parameter string) string {
+func (h *handler) communicate(interfaceName, method, parameterTypesString, parameter string) []byte {
 	target := h.client.Next()
 	if h.pools[target] == nil {
 		factory := func() (net.Conn, error) { return net.Dial("tcp", target) }
@@ -73,8 +73,9 @@ func (h *handler) communicate(interfaceName, method, parameterTypesString, param
 	}
 	conn, err := h.pools[target].Get()
 	if err != nil {
-		panic(err)
+		log.Fatal("error getting net.Conn from connection pool")
 	}
+	defer conn.Close()
 	s := fmt.Sprintf("%s-%s-%s-%s\n", interfaceName, method, parameterTypesString, parameter)
 	_, err = conn.Write([]byte(s))
 	if err != nil {
@@ -86,5 +87,5 @@ func (h *handler) communicate(interfaceName, method, parameterTypesString, param
 	if err != nil {
 		panic(err)
 	}
-	return string(b[:n])
+	return b[:n]
 }
