@@ -36,7 +36,8 @@ func ListenAndServe(port string) error {
 		client: client,
 		pools:  make(map[string]pool.Pool),
 	})
-	return http.ListenAndServe(port, nil)
+	p := fmt.Sprintf(":%s", port)
+	return http.ListenAndServe(p, nil)
 }
 
 type handler struct {

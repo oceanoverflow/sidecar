@@ -3,6 +3,7 @@ package provider
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"log"
 	"net"
 	"strings"
@@ -26,11 +27,17 @@ var (
 	leakyBuffer *pool.LeakyBuffer
 )
 
-func ServeCommunicate(size, port, dubbo string) {
+// ServeCommunicate accept the connection from consumer
+// parse the request and forward the payload to dubbo
+func ServeCommunicate(host, port, dubbo string) {
 	client := registry.New()
-	client.Put("com.some.package.IHelloService", size, port)
+	err := client.Register("com.some.package.IHelloService", host, port)
+	if err != nil {
+		log.Println(err)
+	}
 
-	factory := func() (net.Conn, error) { return net.Dial("tcp", dubbo) }
+	remote := fmt.Sprintf("%s:%s", host, dubbo)
+	factory := func() (net.Conn, error) { return net.Dial("tcp", remote) }
 
 	initial = viper.GetInt("connpool.initial")
 	max = viper.GetInt("connpool.max")
@@ -42,8 +49,8 @@ func ServeCommunicate(size, port, dubbo string) {
 	bufSize = viper.GetInt("leakybuffer.bufSize")
 	leakyBuffer = pool.NewLeakyBuffer(n, bufSize)
 
-	listenPort := viper.GetString("provider." + size)
-	ln, err := net.Listen("tcp", listenPort)
+	p := fmt.Sprintf(":%s", port)
+	ln, err := net.Listen("tcp", p)
 	if err != nil {
 		log.Fatalln("Unable to bind to the specific port")
 	}

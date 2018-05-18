@@ -8,16 +8,16 @@ echo ETCD_URL = $ETCD_URL
 
 if [[ "$1" == "consumer" ]]; then
   echo "Starting consumer agent..."
-  sidecar consumer --etcd=$ETCD_URL 
+  sidecar consumer --etcd=$ETCD_URL --cfg="/root/dists/config.toml"
 elif [[ "$1" == "provider-small" ]]; then
   echo "Starting small provider agent..."
-  sidecar provider small --etcd=$ETCD_URL 
+  sidecar provider small --etcd=$ETCD_URL --cfg="/root/dists/config.toml"
 elif [[ "$1" == "provider-medium" ]]; then
   echo "Starting medium provider agent..."
-  sidecar provider medium --etcd=$ETCD_URL  
+  sidecar provider medium --etcd=$ETCD_URL --cfg="/root/dists/config.toml"
 elif [[ "$1" == "provider-large" ]]; then
   echo "Starting large provider agent..."
-  sidecar provider large --etcd=$ETCD_URL  
+  sidecar provider large --etcd=$ETCD_URL --cfg="/root/dists/config.toml"
 else
   echo "Unrecognized arguments, exit."
   exit 1

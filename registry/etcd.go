@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/client"
 	"github.com/spf13/viper"
 
 	"github.com/oceanoverflow/sidecar/loadbalancing"
-	"github.com/oceanoverflow/sidecar/utils"
 )
 
 var (
@@ -25,24 +25,30 @@ type Client struct {
 	nodes      loadbalancing.WeightedServers
 }
 
+var c *Client
+var once sync.Once
+
 // New return an instance of etcd client
 func New() *Client {
-	c := &Client{}
+	once.Do(func() {
+		c = &Client{}
+	})
+
 	if c.connected {
-		log.Println("can't connect twice")
+		log.Println("Can't connect twice")
 		return nil
 	}
 
-	ep := []string{}
+	var endpoints []string
 	single := viper.GetString("etcd")
 	if single == "" {
 		log.Println("Please specify the address of etcd")
 		return nil
 	}
-	ep = append(ep, single)
+	endpoints = append(endpoints, single)
 
 	cfg := client.Config{
-		Endpoints:               ep,
+		Endpoints:               endpoints,
 		Transport:               client.DefaultTransport,
 		HeaderTimeoutPerRequest: time.Second,
 	}
@@ -60,6 +66,7 @@ func New() *Client {
 func (c *Client) Connect(serviceName string) error {
 	kapi := client.NewKeysAPI(c.etcdClient)
 	path := fmt.Sprintf("/%s/%s", rootPath, serviceName)
+
 	resp, err := kapi.Get(context.Background(), path, nil)
 	if err != nil {
 		return err
@@ -67,14 +74,13 @@ func (c *Client) Connect(serviceName string) error {
 		if resp.Node.Dir {
 			for _, peer := range resp.Node.Nodes {
 				s := peer.Value
-				ss := strings.Split(s, "-")
-				switch ss[0] {
-				case "small":
-					c.nodes.Add(ss[1], 1)
-				case "medium":
-					c.nodes.Add(ss[1], 2)
-				case "large":
-					c.nodes.Add(ss[1], 3)
+				switch strings.Split(s, ":")[0] {
+				case "provider-small":
+					c.nodes.Add(s, 1)
+				case "provider-medium":
+					c.nodes.Add(s, 2)
+				case "provider-large":
+					c.nodes.Add(s, 3)
 				}
 			}
 		}
@@ -86,16 +92,17 @@ func (c *Client) Connect(serviceName string) error {
 	return nil
 }
 
-// Put let the provider agent publish their ip address
-// /dubbomesh/com.some.package.IHelloService/192.168.100.100:2000
-func (c *Client) Put(serviceName, size, port string) error {
+// Register register the provider's service address on etcd
+// /dubbomesh/com.some.package.IHelloService/provider-small:20000
+func (c *Client) Register(serviceName, host, port string) error {
 	kapi := client.NewKeysAPI(c.etcdClient)
-	s := fmt.Sprintf("/%s/%s/%s-%s:%s", rootPath, serviceName, size, utils.GetHostIP(), port)
+	s := fmt.Sprintf("/%s/%s/%s:%s", rootPath, serviceName, host, port)
+
 	resp, err := kapi.Set(context.Background(), s, "", nil)
 	if err != nil {
 		return err
 	}
-	log.Printf("Set is done. Metadata is %q\n", resp)
+	log.Printf("serviceName is registered on etcd, resp is %q\n", resp)
 	return nil
 }
 
@@ -110,20 +117,18 @@ func (c *Client) watch(watcher client.Watcher) {
 		if err == nil {
 			if resp.Action == "set" {
 				s := resp.Node.Value
-				ss := strings.Split(s, "-")
-				switch ss[0] {
-				case "small":
-					c.nodes.Add(ss[1], 1)
-				case "medium":
-					c.nodes.Add(ss[1], 2)
-				case "large":
-					c.nodes.Add(ss[1], 3)
+				switch strings.Split(s, ":")[0] {
+				case "provider-small":
+					c.nodes.Add(s, 1)
+				case "provider-medium":
+					c.nodes.Add(s, 2)
+				case "provider-large":
+					c.nodes.Add(s, 3)
 				}
 			}
 		}
-		// stop watching is all the key is get
-		// here the max number is 3
-		// this is hacky, modify this later
+
+		// stop watch when all nodes is get
 		if c.nodes.Len() == 3 {
 			return
 		}

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var port, dubbo string
+var host, port, dubbo string
 
 var providerCmd = &cobra.Command{
 	Use:   "provider",
@@ -22,16 +22,19 @@ var providerCmd = &cobra.Command{
 		}
 		switch args[0] {
 		case "small":
+			host = "provider-small"
 			port = viper.GetString("provider.small.port")
 			dubbo = viper.GetString("provider.small.dubbo")
 		case "medium":
+			host = "provider-medium"
 			port = viper.GetString("provider.medium.port")
 			dubbo = viper.GetString("provider.medium.dubbo")
 		case "large":
+			host = "provider-large"
 			port = viper.GetString("provider.large.port")
 			dubbo = viper.GetString("provider.large.dubbo")
 		default:
 		}
-		provider.ServeCommunicate(args[0], port, dubbo)
+		provider.ServeCommunicate(host, port, dubbo)
 	},
 }

@@ -8,20 +8,20 @@
 
 # the http port that consumer agent listens on
 [consumer]
-    port  = ":20000"
+    port  = "20000"
 
 # the tcp port that opened by each provider
 # small, medium and large respectively
 # dubbo represents the port of dubbo rpc
 [provider]
     [provider.small]
-    port  = ":30000"
-    dubbo = ":20889"
+    port  = "30000"
+    dubbo = "20889"
 
     [provider.medium]
-    port  = ":30001"
-    dubbo = ":20890"
+    port  = "30001"
+    dubbo = "20890"
 
     [provider.large]
-    port  = ":30002"
-    dubbo = ":20891"
+    port  = "30002"
+    dubbo = "20891"
