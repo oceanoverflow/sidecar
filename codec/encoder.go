@@ -1,7 +1,7 @@
 package codec
 
 import (
-	"io"
+	"bytes"
 	"sync/atomic"
 )
 
@@ -15,7 +15,7 @@ func GetUniqueID() uint64 {
 	return atomic.AddUint64(&uniqueID, uint64(1))
 }
 
-func NewRequest() *DubboRequest {
+func NewRequest(arguments []byte) *DubboRequest {
 	dubboHeader := DubboHeader([16]byte{})
 	dubboHeader[0] = MagicHigh
 	dubboHeader[1] = MagicLow
@@ -27,33 +27,35 @@ func NewRequest() *DubboRequest {
 
 	return &DubboRequest{
 		DubboHeader:    &dubboHeader,
-		DubboVersion:   "2.6.0",
+		DubboVersion:   "2.0.1",
 		ServiceName:    "com.alibaba.dubbo.performance.demo.provider.IHelloService",
-		ServiceVersion: "2.0.0",
 		MethodName:     "hash",
 		ParameterTypes: "Ljava/lang/String;",
+		Arguments:      arguments,
+		Attachment:     map[string]string{"path": "com.alibaba.dubbo.performance.demo.provider.IHelloService"},
 	}
 }
 
-func (r DubboRequest) Encode() []byte {
-	// first and foremost, encode the json
-	// get the total length of the data
-	// make one byte slice using make([]byte, length)
-	// fill the slice with respective data
-	// finally return it
-	// things to take care of
-	return nil
+func (r *DubboRequest) Encode() []byte {
+	body := r.EncodeBody()
+	length := len(body)
+	r.DubboHeader.SetDataLength(uint32(length))
+
+	ret := make([]byte, length+16)
+	copy(ret[:16], r.DubboHeader[:])
+	copy(ret[16:], body[:])
+
+	return ret
 }
 
-func (r DubboRequest) WriteTo(w io.Writer) error {
-	_, err := w.Write(r.DubboHeader[:])
-	if err != nil {
-		return err
-	}
-	// do something with the extra parts
-	return nil
-}
-
-func encodeAttachments() {
-
+func (r *DubboRequest) EncodeBody() []byte {
+	var b bytes.Buffer
+	b.Write(WriteObject(r.DubboVersion))
+	b.Write(WriteObject(r.ServiceName))
+	b.Write(WriteObject(nil))
+	b.Write(WriteObject(r.MethodName))
+	b.Write(WriteObject(r.ParameterTypes))
+	b.Write(WriteObject(r.Arguments))
+	b.Write(WriteObject(r.Attachment))
+	return b.Bytes()
 }

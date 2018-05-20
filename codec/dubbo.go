@@ -19,22 +19,22 @@ const (
 type SerializeType byte
 
 const (
-	JSON SerializeType = iota
+	JSON SerializeType = 0x06
 )
 
 type StatusType uint8
 
 const (
-	OK                                StatusType = 20
-	CLIENT_TIMEOUT                               = 30
-	SERVER_TIMEOUT                               = 31
-	BAD_REQUEST                                  = 40
-	BAD_RESPONSE                                 = 50
-	SERVICE_NOT_FOUND                            = 60
-	SERVICE_ERROR                                = 70
-	SERVER_ERROR                                 = 80
-	CLIENT_ERROR                                 = 90
-	SERVER_THREADPOOL_EXHAUSTED_ERROR            = 100
+	OK                                = StatusType(20)
+	CLIENT_TIMEOUT                    = StatusType(30)
+	SERVER_TIMEOUT                    = StatusType(31)
+	BAD_REQUEST                       = StatusType(40)
+	BAD_RESPONSE                      = StatusType(50)
+	SERVICE_NOT_FOUND                 = StatusType(60)
+	SERVICE_ERROR                     = StatusType(70)
+	SERVER_ERROR                      = StatusType(80)
+	CLIENT_ERROR                      = StatusType(90)
+	SERVER_THREADPOOL_EXHAUSTED_ERROR = StatusType(100)
 )
 
 type ReturnValueType int
@@ -53,13 +53,6 @@ const (
 // Length    uint32
 type DubboHeader [16]byte
 
-// * Dubbo version
-// * Service name
-// * Service version
-// * Method name
-// * Method parameter types
-// * Method arguments
-// * Attachments
 type DubboRequest struct {
 	*DubboHeader
 	DubboVersion   string
@@ -75,8 +68,8 @@ type DubboRequest struct {
 // * Return value, the real value returns from server.
 type DubboResponse struct {
 	*DubboHeader
-	Type  int
-	Value []byte
+	ReturnType  uint8
+	ReturnValue []byte
 }
 
 func (h DubboHeader) CheckMagicNumber() bool {
@@ -119,7 +112,6 @@ func (h DubboHeader) SerializeType() SerializeType {
 	return SerializeType(h[2] & 0x1f)
 }
 
-// ???
 func (h *DubboHeader) SetSerializeType(st SerializeType) {
 	h[2] = h[2] & byte(st)
 }
@@ -145,5 +137,5 @@ func (h DubboHeader) DataLength() uint32 {
 }
 
 func (h *DubboHeader) SetDataLength(length uint32) {
-	binary.BigEndian.PutUint32(h[13:16], length)
+	binary.BigEndian.PutUint32(h[12:16], length)
 }

@@ -72,16 +72,15 @@ func handleConnection(conn net.Conn, dubbo string, connPool pool.Pool) {
 		}
 		info = info[:len(info)-1]
 		slices := strings.Split(info, "-")
-		r := codec.NewRequest()
-		r.Arguments = []byte(slices[3])
+		r := codec.NewRequest([]byte(slices[3]))
 		payload := r.Encode()
 		result := call(dubbo, payload, connPool)
-		dubboResponse, err := codec.Read(bytes.NewReader(result))
+		response, err := codec.Read(bytes.NewReader(result))
 		if err != nil {
 			log.Println("error decoding result, can not parse")
 			return
 		}
-		conn.Write(dubboResponse.Value)
+		conn.Write(response.ReturnValue)
 	}
 }
 
