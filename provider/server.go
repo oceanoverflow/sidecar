@@ -59,11 +59,11 @@ func ServeCommunicate(host, port, dubbo string) {
 		if err != nil {
 			log.Fatalln("Unable to accept connection")
 		}
-		go handleConnection(conn, dubbo, connPool)
+		go handleConnection(conn, connPool)
 	}
 }
 
-func handleConnection(conn net.Conn, dubbo string, connPool pool.Pool) {
+func handleConnection(conn net.Conn, connPool pool.Pool) {
 	for {
 		info, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
@@ -74,7 +74,7 @@ func handleConnection(conn net.Conn, dubbo string, connPool pool.Pool) {
 		slices := strings.Split(info, "-")
 		r := codec.NewRequest([]byte(slices[3]))
 		payload := r.Encode()
-		result := call(dubbo, payload, connPool)
+		result := call(payload, connPool)
 		response, err := codec.Read(bytes.NewReader(result))
 		if err != nil {
 			log.Println("error decoding result, can not parse")
@@ -84,7 +84,7 @@ func handleConnection(conn net.Conn, dubbo string, connPool pool.Pool) {
 	}
 }
 
-func call(dubbo string, payload []byte, connPool pool.Pool) (result []byte) {
+func call(payload []byte, connPool pool.Pool) (result []byte) {
 	conn, err := connPool.Get()
 	if err != nil {
 		log.Printf("error get connection from conn pool")

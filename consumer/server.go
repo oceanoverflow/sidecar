@@ -32,7 +32,7 @@ func ListenAndServe(port string) error {
 	client := registry.New()
 	client.Connect("com.some.package.IHelloService")
 	lb = pool.NewLeakyBuffer(n, bufSize)
-	http.Handle("/hash", &handler{
+	http.Handle("/", &handler{
 		client: client,
 		pools:  make(map[string]pool.Pool),
 	})

@@ -70,18 +70,18 @@ func (c *Client) Connect(serviceName string) error {
 	resp, err := kapi.Get(context.Background(), path, nil)
 	if err != nil {
 		return err
-	} else {
-		if resp.Node.Dir {
-			for _, peer := range resp.Node.Nodes {
-				s := peer.Value
-				switch strings.Split(s, ":")[0] {
-				case "provider-small":
-					c.nodes.Add(s, 1)
-				case "provider-medium":
-					c.nodes.Add(s, 2)
-				case "provider-large":
-					c.nodes.Add(s, 3)
-				}
+	}
+
+	if resp.Node.Dir {
+		for _, peer := range resp.Node.Nodes {
+			s := peer.Value
+			switch strings.Split(s, ":")[0] {
+			case "provider-small":
+				c.nodes.Add(s, 1)
+			case "provider-medium":
+				c.nodes.Add(s, 2)
+			case "provider-large":
+				c.nodes.Add(s, 3)
 			}
 		}
 	}
