@@ -22,7 +22,7 @@ const (
 	JSON SerializeType = 0x06
 )
 
-type StatusType uint8
+type StatusType byte
 
 const (
 	OK                                = StatusType(20)
@@ -37,7 +37,7 @@ const (
 	SERVER_THREADPOOL_EXHAUSTED_ERROR = StatusType(100)
 )
 
-type ReturnValueType int
+type ReturnValueType byte
 
 const (
 	RESPONSE_WITH_EXCEPTION ReturnValueType = iota
@@ -68,7 +68,7 @@ type DubboRequest struct {
 // * Return value, the real value returns from server.
 type DubboResponse struct {
 	*DubboHeader
-	ReturnType  uint8
+	ReturnType  byte
 	ReturnValue []byte
 }
 
@@ -113,7 +113,7 @@ func (h DubboHeader) SerializeType() SerializeType {
 }
 
 func (h *DubboHeader) SetSerializeType(st SerializeType) {
-	h[2] = h[2] & byte(st)
+	h[2] = (h[2] & 0xE0) | byte(st)
 }
 
 func (h DubboHeader) StatusType() StatusType {
